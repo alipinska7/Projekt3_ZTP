@@ -28,7 +28,7 @@ def combine_years(data_dict):
     return df_final
 
 #2 wersja
-def combine_years(data_dict):
+def combine_years2(data_dict):
     # Dodanie kolumny 'rok' do każdego df
     for rok, df in data_dict.items():
         tmp = df.copy()
