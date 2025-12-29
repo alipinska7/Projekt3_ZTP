@@ -17,18 +17,26 @@ def download_gios_archive(year, gios_id, filename):
     response.raise_for_status()  # jeśli błąd HTTP, zatrzymaj
 
     # Otwórz zip w pamięci
-    
-    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-        # znajdź właściwy plik z PM2.5
-        if not filename:
-            print(f"Błąd: nie znaleziono {filename}.")
-        else:
-            # wczytaj plik do pandas
-            with z.open(filename) as f:
-                try:
-                    df = pd.read_excel(f, header=None)
-                except Exception as e:
-                    print(f"Błąd przy wczytywaniu {year}: {e}")
+    if zipfile.is_zipfile(io.BytesIO(response.content)):
+        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+            # znajdź właściwy plik z PM2.5
+            if not filename:
+                print(f"Błąd: nie znaleziono {filename}.")
+            else:
+                # wczytaj plik do pandas
+                with z.open(filename) as f:
+                    try:
+                        df = pd.read_excel(f, header=None)
+                    except Exception as e:
+                        print(f"Błąd przy wczytywaniu {year}: {e}")
+
+    else:
+        try:
+            return pd.read_excel(io.BytesIO(content))
+        except Exception as e:
+            print(f"Błąd przy wczytywaniu pliku Excel")
+            return None
+
     return df
 
 
@@ -51,9 +59,6 @@ def load_all_data():
             all_years_data[year] = df
 
     return all_years_data
-
-# metadane_id = '622'
-# metadane_file = 'Metadane oraz kody stacji i stanowisk pomiarowych.xlsx'
 
 def load_metadane():
 
