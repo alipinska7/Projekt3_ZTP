@@ -1,35 +1,26 @@
-import numpy as np
+import pandas as pd
 
-def clear_data(df, good_year):
-    # Znalezienie numeru wiersza, w którym pierwsza kolumna to "Kod stacji"
+def clear_data(df, year):
+    # Znalezienie wiersza z kodami stacji
     try:
-        idx_kod = df[df.iloc[:, 0] == "Kod stacji"].index[0]
+        idx_kod = df.index[df.eq("Kod stacji").any(axis=1)][0]
     except IndexError:
-        print(f"Nie znaleziono wiersza 'Kod stacji' w roku {good_year}")
+        print(f"Nie znaleziono wiersza 'Kod stacji' w roku {year}")
         return None
 
-    # Zapisanie kodów stacji
-    code_stations = df.iloc[idx_kod, 1:].tolist()
-    print(f"Liczba stacji w roku {good_year}: {len(code_stations)}")
+    # Ustawienie nagłówków kolumn
+    df.columns = df.iloc[idx_kod] #przypisanie tego wiersza jako kolumny
+    df = df.iloc[idx_kod + 1:].reset_index(drop=True)
 
-    # Maska, w której konwertujemy dane na daty, nie-daty zamieniamy na NaT
-    is_date = pd.to_datetime(df.iloc[idx_kod + 1:, 0], errors='coerce').notna()
+    # Usuwanie wierszy, które nie zawierają daty w pierwszej kolumnie
+    df = df[pd.to_datetime(df[df.columns[0]], format='mixed', errors='coerce').notna()].reset_index(drop=True)
 
-    # Indeks pierwszego wiersza, który jest datą
-    first_data_row = is_date[is_date == True].index[0]
-
-    # Wycinamy dane właściwe od wyznaczonego dynamicznie wiersza
-    df_clean = df.iloc[first_data_row:].reset_index(drop=True)
-
-    # Oznaczenie kolumny czas i dodanie kodów stacji; konwersja na datetime
-    df.columns = ['Czas'] + code_stations
-
+    # Ujednolicenie nazwy kolumny czasu
+    df = df.rename(columns={df.columns[0]: "czas"})
 
     # Konwersja na datetime
-    df['czas'] = pd.to_datetime(df['czas'], errors='coerce')
+    df['czas'] = pd.to_datetime(df['czas'], format='mixed', errors='coerce')
     df = df.dropna(subset=['czas']).reset_index(drop=True)
-
-    df = df[df['czas'].dt.year == good_year].copy()
 
     # Przesunięcie pomiarów o północy na dzień poprzedni;
     mask_midnight = df['czas'].dt.hour == 0
@@ -68,20 +59,58 @@ def add_place(df, meta):
     return df
 
 # Funkcja przygotowująca DateFrame do analizy (czyszczenie danych, aktualizacja kodów stacji, dodanie miejscowości)
-def prepare_to_analize(df, meta, good_year):
+def prepare_to_analize(all_data, meta):
+
+    processed_data = {}
 
     # Czyszczenie i niezbędne modyfikacje
-    df_cleaned = clear_data(df, good_year)
-    if df_cleaned is None:
-        return None
+    for year, df in all_data.items():
+        df_cleaned = clear_data(df, year)
+        if df_cleaned is None:
+            return None
 
-    # Aktualizacja starych kodów na nowe
-    df_updated = update_data(df_cleaned, meta)
+        # Aktualizacja starych kodów na nowe
+        df_updated = update_data(df_cleaned, meta)
 
-    # Dodanie miejscowości i ustalenie kolejności kolumn
-    df_final = add_place(df_updated, meta)
+        # Dodanie miejscowości i ustalenie kolejności kolumn
+        df_final = add_place(df_updated, meta)
 
-    return df_final
+        # Dodanie DF do słownika
+        processed_data[year] = df_final
+
+    return processed_data
+
+
+
+def combine_years(all_data):
+
+    # Zachowanie miejscowości z dfów
+    full_df = pd.concat(all_data.values())
+    place_map = full_df.drop_duplicates('stacja').set_index('stacja')['miejscowość']
+
+    dfs = []
+    for year, df in all_data.items():
+        # Zmiana na format szeroki (żeby join ='inner' działało)
+        pivoted = df.pivot(index='czas', columns='stacja', values='wartość')
+        dfs.append(pivoted)
+
+    # Filtrowanie stacji: wszystkie te, które występują we wszystkich analizowanych latachs
+    combined_wide = pd.concat(dfs, axis=0, join='inner')
+
+    # Powrót do odpowiedniego formatu do analizy danych
+    df_all = combined_wide.reset_index().melt(
+        id_vars='czas',
+        var_name='stacja',
+        value_name='wartość'
+    )
+
+    # Dodanie kolumny miejscowość
+    df_all['miejscowość'] = df_all['stacja'].map(place_map)
+
+    # Dodanie kolumny rok
+    df_all['rok'] = df_all['czas'].dt.year
+
+    return df_all
 
 
 
