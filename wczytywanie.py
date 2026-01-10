@@ -17,29 +17,24 @@ def download_gios_archive(year, gios_id, filename):
     response.raise_for_status()  # jeśli błąd HTTP, zatrzymaj
 
     # Otwórz zip w pamięci
-    if zipfile.is_zipfile(io.BytesIO(response.content)):
-        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
-            # znajdź właściwy plik z PM2.5
-            if not filename:
-                print(f"Błąd: nie znaleziono {filename}.")
-            else:
-                # wczytaj plik do pandas
-                with z.open(filename) as f:
-                    try:
-                        df = pd.read_excel(f, header=None)
-                    except Exception as e:
-                        print(f"Błąd przy wczytywaniu {year}: {e}")
 
-    else:
-        try:
-            return pd.read_excel(io.BytesIO(content))
-        except Exception as e:
-            print(f"Błąd przy wczytywaniu pliku Excel")
-            return None
+    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+        # znajdź właściwy plik z PM2.5
+        if not filename:
+            print(f"Błąd: nie znaleziono {filename}.")
+        else:
+            # wczytaj plik do pandas
+            with z.open(filename) as f:
+                try:
+                    df = pd.read_excel(f, header=None)
+                except Exception as e:
+                    print(f"Błąd przy wczytywaniu {year}: {e}")
+
 
     return df
 
 
+# Zebranie wszystkich danych do słownika
 def load_all_data():
 
     all_years_data = {}
@@ -60,10 +55,20 @@ def load_all_data():
 
     return all_years_data
 
+# załadowywanie metadanych
 def load_metadane():
+    metadata_url = (
+        "https://powietrze.gios.gov.pl/pjp/archives/"
+        "Metadane%20oraz%20kody%20stacji%20i%20stanowisk%20pomiarowych.xlsx"
+    )
+    return pd.read_excel(metadata_url)
 
-    metadane_id = '622'
-    metadane_file = 'Metadane oraz kody stacji i stanowisk pomiarowych.xlsx'
-    meta = download_gios_archive("Metadane", metadane_id, metadane_file)
 
-    return meta
+   # metadane_id = '622'
+   # metadane_file = 'Metadane oraz kody stacji i stanowisk pomiarowych.xlsx'
+   #  meta = download_gios_archive("Metadane", metadane_id, metadane_file)
+
+#awaryjne: na wypadek, gdyby nie działała strona
+def load_metadane2():
+    return pd.read_excel("metadane.xlsx") # Upewnij się, że plik jest w folderze z projektem
+
