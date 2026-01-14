@@ -17,7 +17,6 @@ def download_gios_archive(year, gios_id, filename):
     response.raise_for_status()  # jeśli błąd HTTP, zatrzymaj
 
     # Otwórz zip w pamięci
-
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         # znajdź właściwy plik z PM2.5
         if not filename:
@@ -36,10 +35,18 @@ def download_gios_archive(year, gios_id, filename):
 
 # Zebranie wszystkich danych do słownika
 def load_all_data():
-
+    """
+        Pobiera dane PM2.5 dla wszystkich lat zdefiniowanych w słowniku `gios_url_ids` i `gios_pm25_file`.
+        Funkcja:
+        - Iteruje po wszystkich latach w słowniku.
+        - Pobiera dane dla każdego roku za pomocą `download_gios_archive`.
+        - Zbiera wszystkie DataFrame'y do słownika: {rok: DataFrame}.
+        Returns:
+            dict: Słownik DataFrame'ów, gdzie klucz to rok, a wartość to DataFrame z danymi PM2.5.
+    """
     all_years_data = {}
 
-    # pętla po latach słownika gios_url_ids
+    #pętla po latach z słownika gios_url_ids
     for year in gios_url_ids.keys():
         print(f"Wczytywanie roku {year}...")
 
@@ -57,6 +64,12 @@ def load_all_data():
 
 # załadowywanie metadanych
 def load_metadane():
+    """
+        Wczytuje metadane stacji pomiarowych PM2.5 z archiwum GIOŚ.
+        Returns:
+            pd.DataFrame: DataFrame zawierający metadane stacji, w tym kolumny:
+                          'Kod stacji', 'Miejscowość', 'Stary kod stacji (o ile istnieje)'.
+    """
     metadata_url = (
         "https://powietrze.gios.gov.pl/pjp/archives/"
         "Metadane%20oraz%20kody%20stacji%20i%20stanowisk%20pomiarowych.xlsx"
@@ -70,5 +83,11 @@ def load_metadane():
 
 #awaryjne: na wypadek, gdyby nie działała strona
 def load_metadane2():
-    return pd.read_excel("metadane.xlsx") # Upewnij się, że plik jest w folderze z projektem
+    """
+        Wczytuje metadane stacji PM2.5 z lokalnego pliku Excel.
+        Funkcja awaryjna, gdy serwis GIOŚ jest niedostępny.
+        Returns:
+            pd.DataFrame: DataFrame zawierający metadane stacji.
+    """
+    return pd.read_excel("metadane.xlsx")
 

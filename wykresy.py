@@ -32,7 +32,7 @@ def heatmap_plot(df_mean_month):
         m_srednie = df_mean_month[df_mean_month['miejscowość'] == city]
         h_data = (m_srednie.pivot_table(values='średnie_PM25', index='rok', columns='miesiąc').astype(float))
 
-        sns.heatmap(h_data, cmap='rocket_r', vmin=0.0, vmax=80.0, cbar=False, ax=ax)
+        sns.heatmap(h_data, cmap='rocket_r', vmin=0.0, vmax=70.0, cbar=False, ax=ax)
         ax.set_title(city)
         ax.set_xlabel('Miesiąc')
         ax.set_ylabel('Rok')

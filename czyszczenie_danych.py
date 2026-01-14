@@ -1,6 +1,15 @@
 import pandas as pd
 
 def clear_data(df, year):
+    """
+        Oczyszcza dane PM2.5 z GIOŚ.
+        Args:
+            df (pd.DataFrame): DataFrame z surowymi danymi.
+            year (int): Rok, dla którego dane są przetwarzane.
+        Returns:
+            pd.DataFrame: Dane w formacie long z kolumnami 'czas', 'stacja', 'wartość'.
+    """
+
     # Znalezienie wiersza z kodami stacji
     try:
         idx_kod = df.index[df.eq("Kod stacji").any(axis=1)][0]
@@ -32,6 +41,15 @@ def clear_data(df, year):
     # Przygotowanie df do analizy danych
     df = df.melt(id_vars='czas', var_name='stacja', value_name='wartość')
 
+    # Sanity Check
+    if 'stacja' in df.columns:
+        stations = df['stacja'].nunique()
+        print(f"Liczba stacji: {stations}")
+    if 'czas' in df.columns:
+        df_year = df[df['czas'].dt.year == year]
+        days = df_year['czas'].dt.date.nunique()
+        print(f"Liczba dni w roku {year}, w których wykonywano pomiary: {days}")
+
     return df
 
 
@@ -48,19 +66,45 @@ def update_data(df, meta):
 
 
 def add_place(df, meta):
+    """
+        Dodaje kolumnę 'miejscowość' do DataFrame na podstawie metadanych stacji i ustala kolejność kolumn.
+
+        Args:
+            df (pd.DataFrame): DataFrame w formacie long z kolumnami 'czas', 'stacja', 'wartość'.
+            meta (pd.DataFrame): DataFrame z metadanymi stacji zawierający kolumny:
+                                'Kod stacji', 'Stary kod stacji (o ile inny od aktualnego)', 'Miejscowość'.
+        Returns:
+            pd.DataFrame: DataFrame z dodaną kolumną 'miejscowość' i ustaloną kolejnością kolumn:
+                          ['czas', 'stacja', 'miejscowość', 'wartość'].
+    """
+
     # słownik klucz: kod stacji, wartość: miejscowość stacji;
     place_map = dict(zip(meta['Kod stacji'], meta['Miejscowość']))
 
-    # utworzenie kolumny 'miejscowosc' i przypisanie każdej stacji w df odpowiedniej miejscowości
+    # utworzenie kolumny 'miejscowość' i przypisanie każdej stacji w df odpowiedniej miejscowości
     df['miejscowość'] = df['stacja'].map(place_map)
 
-    df = df[['czas', 'stacja', 'miejscowość', 'wartość']]  # ustawienie kolejności kolumn
+    df = df[['czas', 'stacja', 'miejscowość', 'wartość']]  # ustalenie kolejności kolumn
 
     return df
 
-# Funkcja przygotowująca DateFrame do analizy (czyszczenie danych, aktualizacja kodów stacji, dodanie miejscowości)
+# Funkcja przygotowująca DateFrame do  analizy (czyszczenie danych, aktualizacja kodów stacji, dodanie miejscowości)
 def prepare_to_analize(all_data, meta):
+    """
+        Przygotowuje i oczyszcza dane PM2.5 do analizy dla wielu lat.
+        Funkcja:
+        1. Oczyszcza dane za pomocą `clear_data`
+        2. Aktualizuje stare kody stacji na nowe (`update_data`)
+        3. Dodaje kolumnę 'miejscowość' (`add_place`)
+        4. Porządkuje kolejność kolumn w DataFrame
 
+        Args:
+            all_data (dict): Słownik z kluczami będącymi latami (int), a wartościami DataFrame z danymi surowymi.
+            meta (pd.DataFrame): DataFrame z metadanymi stacji zawierający kolumny:
+                                'Kod stacji', 'Stary kod stacji (o ile inny od aktualnego)', 'Miejscowość'.
+        Returns:
+            dict: Słownik DataFrame'ów przygotowanych do analizy, jeden DataFrame na każdy rok.
+    """
     processed_data = {}
 
     # Czyszczenie i niezbędne modyfikacje
@@ -83,8 +127,24 @@ def prepare_to_analize(all_data, meta):
 
 
 def combine_years(all_data):
+    """
+        Łączy dane PM2.5 z wielu lat w jeden DataFrame w formacie long.
 
-    # Zachowanie miejscowości z dfów
+        Funkcja:
+        1. Zachowuje kolumnę 'miejscowość' z oryginalnych DataFrame'ów.
+        2. Tworzy pivot dla każdego roku, by filtrować tylko stacje obecne we wszystkich latach.
+        3. Łączy dane w jeden DataFrame.
+        4. Dodaje kolumnę 'miejscowość' i kolumnę 'rok'.
+        5. Wykonuje sanity check – wypisuje liczbę unikalnych stacji i liczbę dni w każdym roku.
+
+        Args:
+            all_data (dict): Słownik DataFrame'ów (jeden DataFrame na każdy rok), w formacie long
+                             z kolumnami 'czas', 'stacja', 'wartość', 'miejscowość'.
+        Returns:
+            pd.DataFrame: Połączone dane w formacie long z kolumnami:
+                          'czas', 'stacja', 'wartość', 'miejscowość', 'rok'.
+    """
+    # Zachowanie miejscowości z dfów, w postaci słownika
     full_df = pd.concat(all_data.values())
     place_map = full_df.drop_duplicates('stacja').set_index('stacja')['miejscowość']
 
@@ -94,7 +154,7 @@ def combine_years(all_data):
         pivoted = df.pivot(index='czas', columns='stacja', values='wartość')
         dfs.append(pivoted)
 
-    # Filtrowanie stacji: wszystkie te, które występują we wszystkich analizowanych latachs
+    # Filtrowanie stacji: wszystkie te, które występują we wszystkich analizowanych latach
     combined_wide = pd.concat(dfs, axis=0, join='inner')
 
     # Powrót do odpowiedniego formatu do analizy danych
@@ -110,31 +170,14 @@ def combine_years(all_data):
     # Dodanie kolumny rok
     df_all['rok'] = df_all['czas'].dt.year
 
+    # Sanity Check
+    if 'stacja' in df_all.columns:
+        stations = df_all['stacja'].nunique()
+        print(f"Liczba unikalnych kodów stacji: {stations}")
+    if 'czas' in df_all.columns:
+        years = df_all['rok'].unique()
+        for year in years:
+            days = df_all[df_all['rok'] == year]['czas'].dt.date.nunique()
+            print(f"Liczba dni w roku {year}: {days}")
+
     return df_all
-
-
-
-
-
-#Przykład jak działa update_data
-"""df_test = pd.DataFrame({
-    'stacja': ['001', '002', '003', '004'],
-    'wartosc': [12, 15, 20, 5]
-})
-
-meta_test = pd.DataFrame({
-    'Kod stacji': ['101', '102', '103'],
-    'Stary Kod stacji \n(o ile inny od aktualnego)': ['001', '003,004', None]
-})
-
-print("Przed aktualizacją:")
-print(df_test)
-
-df_updated = update_data(df_test, meta_test)
-
-print("Po aktualizacji:")
-print(df_updated)"""
-#001 -> 101;
-#002 bez zmian (nie jest starym kodem);
-#003 i 004 -> 002 (oba są starym kodami, oba zmieniają się na 002)
-#103 nie ma starego kodu, ale jest też nieistotny w kontekście df_test
