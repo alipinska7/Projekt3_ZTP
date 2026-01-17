@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="0fdf8197-0401-4f3e-8578-42109c3b7512" name="Changes" comment="" />
+    <list default="true" id="0fdf8197-0401-4f3e-8578-42109c3b7512" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/czyszczenie_danych.py" beforeDir="false" afterPath="$PROJECT_DIR$/czyszczenie_danych.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wykresy.py" beforeDir="false" afterPath="$PROJECT_DIR$/wykresy.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -25,6 +29,8 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "ai.playground.ignore.import.keys.banner.in.settings": "true",
+    "git-widget-placeholder": "main-clean",
+    "nodejs_package_manager_path": "npm",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -44,7 +50,12 @@
       <option name="presentableId" value="Default" />
       <updated>1768385893725</updated>
       <workItem from="1768385898079" duration="152000" />
-      <workItem from="1768409743669" duration="337000" />
+      <workItem from="1768409743669" duration="1007000" />
+      <workItem from="1768410888656" duration="1541000" />
+      <workItem from="1768424208576" duration="1272000" />
+      <workItem from="1768427607994" duration="1252000" />
+      <workItem from="1768665834414" duration="16000" />
+      <workItem from="1768665868148" duration="195000" />
     </task>
     <servers />
   </component>

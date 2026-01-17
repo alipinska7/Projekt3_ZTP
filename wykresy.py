@@ -3,7 +3,22 @@ import seaborn as sns
 
 #ZADANIE 2
 def city_trends_plot(df, cities, years):
+    """
+        Funkcja rysuje wykres liniowy trendów średnich miesięcznych wartości PM2.5
+        dla wybranych miast i lat (po uśrednieniu wyników ze wszystkich stacji pomiarowych w danym mieście).
+        Oś X przedstawia miesiące (1–12), natomiast oś Y średnie wartości PM2.5.
+        Wykres umożliwia porównanie zmian poziomu zanieczyszczenia powietrza w danych miastach dla określonych lat.
 
+        Args:
+        df (pandas.DataFrame): DataFrame zawierający uśrednione dane miesięczne PM2.5 dla miast, z kolumnami:
+            'miejscowość', 'rok', 'miesiąc', 'średnie_PM25'.
+        cities (list[str]): Lista miast do uwzględnienia w analizie
+        years (list[int]): Lista lat do porównania
+
+    Zwraca:
+        None
+        Funkcja wyświetla wykres, nie zwraca wartości.
+    """
     for city in cities:
         for year in years:
             df_plot = df[(df['miejscowość'] == city) & (df['rok'] == year)]
@@ -20,7 +35,29 @@ def city_trends_plot(df, cities, years):
 
 #ZADANIE 3
 def heatmap_plot(df_mean_month):
+    """
+        Funkcja tworzy heatmapy średnich miesięcznych stężeń PM2.5 dla wybranych lat i miejscowości.
 
+        Funkcja generuje wykresy typu heatmap, w których:
+        - oś X przedstawia miesiące (1–12),
+        - oś Y przedstawia lata
+        - kolor reprezentuje średnie stężenie PM2.5 w danym miesiącu i roku,
+          uśrednione po wszystkich stacjach w danej miejscowości.
+
+        Każdy panel (facet) odpowiada jednej miejscowości, co pozwala
+        porównać miany poziomu zanieczyszczeń w czasie
+        pomiędzy różnymi miastami.
+
+        Args:
+            df_mean_month (pandas.DataFrame):
+                DataFrame zawierający uśrednione miesięczne dane PM2.5 dla miast, z kolumnami:
+                'miejscowość', 'rok', 'miesiąc', 'średnie_PM25'.
+        Returns:
+            None
+                Funkcja wyświetla heatmapy, nie zwraca wartości.
+
+        Uwaga: Kolor heatmapy jest skalowany od 0 do 70 µg/m³.
+        """
     # Lista badanych miast
     cities = df_mean_month['miejscowość'].unique()
 
@@ -45,8 +82,29 @@ def heatmap_plot(df_mean_month):
 
 
 #ZADANIE 4
-def barplot(df_trans):
-    # Wygenerowanie grupowego wykresu słupkowego dla powyższych danych
+def barplot(df_exc):
+    """
+        Funkcja tworzy grupowy wykres słupkowy liczby dni z przekroczeniem dobowej normy PM2.5.
+
+        Funkcja wizualizuje liczbę dni, w których stężenie PM2.5 przekroczyło
+        dobową normę dla wybranych stacji i lat.
+
+        Na wykresie:
+        - oś X przedstawia stacje, oś Y – liczbę dni z przekroczeniem,
+        - kolor słupków reprezentuje rok.
+
+        Args:
+            df_exc (pandas.DataFrame):
+                DataFrame zawierający przekształcone dane o liczbie dni
+                z przekroczeniem PM2.5 dla poszczególnych stacji i lat,
+                z kolumnami:
+                - 'miejscowość' (nazwa stacji),
+                - 'rok',
+                - 'ilość przekroczeń'.
+        Returns:
+            None
+            Funkcja wyświetla wykres słupkowy, nie zwraca wartości.
+    """
     plt.figure(figsize=(12, 9))
     sns.barplot(data=df_trans, x='miejscowość', y='ilość przekroczeń', hue='rok', width=0.8)
     plt.title("Wykres przekroczeń dobowej normy zanieczyszczeń PM2.5 dla wybranych stacji", size=20)

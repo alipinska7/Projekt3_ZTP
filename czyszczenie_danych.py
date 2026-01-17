@@ -2,7 +2,10 @@ import pandas as pd
 
 def clear_data(df, year):
     """
-        Oczyszcza dane PM2.5 z GIOŚ.
+        Funkcja:
+        1. Usuwa nieprawidłowe wiersze
+        2. Konwertuje "czas" na datetime
+        3. Przesuwa pomiary o północy na dzień poprzedni
         Args:
             df (pd.DataFrame): DataFrame z surowymi danymi.
             year (int): Rok, dla którego dane są przetwarzane.
@@ -54,6 +57,24 @@ def clear_data(df, year):
 
 
 def update_data(df, meta):
+    """
+        Aktualizuje kody stacji w DataFrame na podstawie danych metadanych.
+
+        Funkcja tworzy mapowanie pomiędzy starymi kodami stacji a ich
+        aktualnymi odpowiednikami na podstawie DataFrame `meta`, a następnie
+        zastępuje stare kody w kolumnie `stacja` w DataFrame `df`.
+
+        W kolumnie 'Stary Kod stacji \n(o ile inny od aktualnego)'
+        może wystąpić wiele kodów oddzielonych przecinkami.
+
+        Args:
+            df (pandas.DataFrame): DataFrame zawierający dane, w którym kolumna 'stacja' ma zostać zaktualizowana.
+            meta (pandas.DataFrame): DataFrame z metadanymi stacji, zawierający kolumny:
+                - 'Kod stacji'
+                - 'Stary Kod stacji \n(o ile inny od aktualnego)'
+        Returns:
+            pandas.DataFrame: DataFrame `df` z uaktualnionymi kodami stacji.
+    """
     # słownik klucz: stary kod, wartość: nowy kod
     code_map = {old_code.strip(): row['Kod stacji'] for _, row in meta.iterrows()
                 for old_code in str(row['Stary Kod stacji \n(o ile inny od aktualnego)'] or '').split(',')
