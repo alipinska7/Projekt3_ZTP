@@ -10,7 +10,7 @@ def city_trends_plot(df, cities, years):
         Wykres umożliwia porównanie zmian poziomu zanieczyszczenia powietrza w danych miastach dla określonych lat.
 
         Args:
-        df (pandas.DataFrame): DataFrame zawierający uśrednione dane miesięczne PM2.5 dla miast, z kolumnami:
+        df (pd.DataFrame): DataFrame zawierający uśrednione dane miesięczne PM2.5 dla miast, z kolumnami:
             'miejscowość', 'rok', 'miesiąc', 'średnie_PM25'.
         cities (list[str]): Lista miast do uwzględnienia w analizie
         years (list[int]): Lista lat do porównania
@@ -44,12 +44,12 @@ def heatmap_plot(df_mean_month):
         - kolor reprezentuje średnie stężenie PM2.5 w danym miesiącu i roku,
           uśrednione po wszystkich stacjach w danej miejscowości.
 
-        Każdy panel (facet) odpowiada jednej miejscowości, co pozwala
-        porównać miany poziomu zanieczyszczeń w czasie
+        Każdy panel odpowiada jednej miejscowości, co pozwala
+        porównać zmiany poziomu zanieczyszczeń w czasie
         pomiędzy różnymi miastami.
 
         Args:
-            df_mean_month (pandas.DataFrame):
+            df_mean_month (pd.DataFrame):
                 DataFrame zawierający uśrednione miesięczne dane PM2.5 dla miast, z kolumnami:
                 'miejscowość', 'rok', 'miesiąc', 'średnie_PM25'.
         Returns:
@@ -61,20 +61,20 @@ def heatmap_plot(df_mean_month):
     # Lista badanych miast
     cities = df_mean_month['miejscowość'].unique()
 
-    # Tworzenie siatki
+    # Tworzenie siatki (5 wierszy x 4 kolumny)
     fig, axes = plt.subplots(nrows=5, ncols=4, figsize=(30, 25))
     axes = axes.flatten()  # spłaszczenie do listy
 
     for ax, city in zip(axes, cities):
-        m_srednie = df_mean_month[df_mean_month['miejscowość'] == city]
-        h_data = (m_srednie.pivot_table(values='średnie_PM25', index='rok', columns='miesiąc').astype(float))
+        m_avg = df_mean_month[df_mean_month['miejscowość'] == city]
+        h_data = (m_avg.pivot_table(values='średnie_PM25', index='rok', columns='miesiąc').astype(float))
 
         sns.heatmap(h_data, cmap='rocket_r', vmin=0.0, vmax=70.0, cbar=False, ax=ax)
         ax.set_title(city)
         ax.set_xlabel('Miesiąc')
         ax.set_ylabel('Rok')
 
-    # Dodanie odpowiedniej legendy
+    # Dodanie odpowiedniej skali kolorów
     cbar = fig.colorbar(axes[0].collections[0], ax=axes, orientation='vertical')
     cbar.set_label('Średnie PM2.5')
 
@@ -94,7 +94,7 @@ def barplot(df_exc):
         - kolor słupków reprezentuje rok.
 
         Args:
-            df_exc (pandas.DataFrame):
+            df_exc (pd.DataFrame):
                 DataFrame zawierający przekształcone dane o liczbie dni
                 z przekroczeniem PM2.5 dla poszczególnych stacji i lat,
                 z kolumnami:
@@ -106,7 +106,7 @@ def barplot(df_exc):
             Funkcja wyświetla wykres słupkowy, nie zwraca wartości.
     """
     plt.figure(figsize=(12, 9))
-    sns.barplot(data=df_trans, x='miejscowość', y='ilość przekroczeń', hue='rok', width=0.8)
+    sns.barplot(data=df_exc, x='miejscowość', y='ilość przekroczeń', hue='rok', width=0.8)
     plt.title("Wykres przekroczeń dobowej normy zanieczyszczeń PM2.5 dla wybranych stacji", size=20)
     plt.ylabel("Ilość wykroczeń ponad dobową normę dla danego roku", size=13)
     plt.xlabel("Stacje", size=13)

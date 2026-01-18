@@ -68,12 +68,12 @@ def update_data(df, meta):
         może wystąpić wiele kodów oddzielonych przecinkami.
 
         Args:
-            df (pandas.DataFrame): DataFrame zawierający dane, w którym kolumna 'stacja' ma zostać zaktualizowana.
-            meta (pandas.DataFrame): DataFrame z metadanymi stacji, zawierający kolumny:
+            df (pd.DataFrame): DataFrame zawierający dane, w którym kolumna 'stacja' ma zostać zaktualizowana.
+            meta (pd.DataFrame): DataFrame z metadanymi stacji, zawierający kolumny:
                 - 'Kod stacji'
                 - 'Stary Kod stacji \n(o ile inny od aktualnego)'
         Returns:
-            pandas.DataFrame: DataFrame `df` z uaktualnionymi kodami stacji.
+            pd.DataFrame: DataFrame `df` z uaktualnionymi kodami stacji.
     """
     # słownik klucz: stary kod, wartość: nowy kod
     code_map = {old_code.strip(): row['Kod stacji'] for _, row in meta.iterrows()

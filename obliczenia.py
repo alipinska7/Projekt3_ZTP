@@ -20,7 +20,6 @@ def add_month_column(df):
 
     return df
 
-#wyliczenie średniej stężenia PM2.5 w każdym miesiącu, dla konkretnych stacji i lat
 def count_monthly_avg_station(df):
     """
         Wylicza średnie miesięczne stężenie PM2.5 dla każdej stacji i każdego roku.
@@ -36,29 +35,8 @@ def count_monthly_avg_station(df):
 
     return monthly_avg
 
-#wyliczenie średniej stężenia PM2.5 w każdym miesiącu, dla konkretnych miast i danych lat
+
 def count_monthly_avg_city(df, cities=None, years=None):
-    """
-        Wylicza średnie miesięczne stężenie PM2.5 dla wybranych miast i lat.
-        Args:
-            df (pd.DataFrame): DataFrame z kolumnami 'miejscowość', 'rok', 'miesiąc', 'wartość'.
-            cities (list, optional): Lista miast, dla których wyliczamy średnie. Domyślnie None (brak filtrowania).
-            years (list, optional): Lista lat, dla których wyliczamy średnie. Domyślnie None (brak filtrowania).
-        Returns:
-            pd.DataFrame: DataFrame z kolumnami:
-                          'miejscowość', 'rok', 'miesiąc', 'średnie_PM25' dla wybranych miast i lat.
-    """
-    # wybór konkretnych miast i lat z df_all
-    df = df[(df['miejscowość'].isin(cities)) & (df['rok'].isin(years))].copy()
-
-    # średnie miesięczne stężenia PM25, ale tylko dla określonych miast i lat
-    monthly_avg = (df.groupby(['miejscowość', 'rok', 'miesiąc'])['wartość'].mean().reset_index()
-                          .rename(columns={'wartość': 'średnie_PM25'}))
-
-    return monthly_avg
-
-#wersja 2
-def count_monthly_avg_city2(df, cities=None, years=None):
     """
     Wylicza średnie miesięczne stężenie PM2.5 dla wybranych miast i lat.
     Jeśli cities lub years nie są podane, funkcja liczy dla wszystkich dostępnych.
@@ -72,6 +50,7 @@ def count_monthly_avg_city2(df, cities=None, years=None):
         pd.DataFrame: DataFrame z kolumnami:
                       'miejscowość', 'rok', 'miesiąc', 'średnie_PM25'.
     """
+    df = filter_data(df)
     df_filtered = df.copy()
 
     if cities is not None:
@@ -103,30 +82,6 @@ def filter_data(df):
     df = df[df['rok'].isin(valid_years)]
 
     return df
-
-#ZADANIE 3
-#wyliczenie średniej stężenia PM2.5 w każdym miesiącu, dla wszystkich miast i analizowanych lat
-def count_monthly_avg_all_cities(df):
-    """
-        Wylicza średnie miesięczne stężenie PM2.5 dla wszystkich miast i analizowanych lat.
-        Funkcja automatycznie filtruje lata z brakującymi danymi (<10 miesięcy) przed obliczeniem średnich.
-        Args:
-            df (pd.DataFrame): DataFrame z kolumnami 'miejscowość', 'rok', 'miesiąc', 'wartość'.
-        Returns:
-            pd.DataFrame: DataFrame z kolumnami:
-                          'miejscowość', 'rok', 'miesiąc', 'średnie_PM25' dla wszystkich miast i lat.
-        """
-    df = filter_data(df)
-
-    monthly_avg = (df.groupby(['miejscowość', 'rok', 'miesiąc'])['wartość'].mean().reset_index()
-    .rename(columns={'wartość': 'średnie_PM25'}))
-
-    return monthly_avg
-
-
-# na tej podstawie określone zostało vmax w funkcji poniżej
-# max_PM25 = monthly_avg_all_cities['średnie_PM25'].max()
-# print(max_PM25)
 
 
 
