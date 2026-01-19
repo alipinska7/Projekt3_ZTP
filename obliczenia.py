@@ -132,44 +132,52 @@ def count_daily_avg(df):
     return data_exceedances
 
 #zadanie 5 
-def voivodeship_above_norm_sum(df_meta, final_df):
+def voivodeship_above_norm_mean(df_meta, final_df, norm = 15):
+    """
+    Oblicza roczną liczbę dni z przekroczeniem normy PM2.5 dla każdego województwa.
+
+    Funkcja integruje dane pomiarowe z metadanymi stacji, wylicza średnie dobowe 
+    dla całych województw i zlicza wystąpienia przekroczeń zadanej normy.
+
+    Args:
+        df_meta (pd.DataFrame): Ramka danych zawierająca metadane stacji. 
+        final_df (pd.DataFrame): Główna ramka danych z pomiarami. 
+        norm (int, optional): Wartość progowa stężenia PM2.5 (µg/m³). 
+            Domyślnie wynosi 15.
+
+    Returns:
+        pd.DataFrame: Tabela wynikowa zawierająca kolumny:
+            - 'Województwo': Nazwa regionu.
+            - 'rok': Rok kalendarzowy pomiaru.
+            - 'liczba przekroczeń': Suma dni, w których średnia dobowa dla 
+            województwa była wyższa niż norma.
+    """
     # tablica z województwami i kodami stacji 
     voivodeship = df_meta[["Kod stacji", "Województwo"]] 
     voivodeship = voivodeship.dropna()
     voivodeship.drop_duplicates(inplace=True)
-# kod zaporzyczony z funkcji obliczenia.count_daily_avg()
-    # Filtrowanie danych
-    df= filter_data(final_df)
-    final_df['czas'] = pd.to_datetime(final_df['czas'])
-
-    # Tabela dobowych stężeń dla wszystkich stacji wynikająca z jednostkowych pomiarów.
-    daily_avg = (df.groupby(['stacja', 'rok', 'miejscowość',df['czas'].dt.date])['wartość'].mean().reset_index() .rename(columns={'czas': 'data', 'wartość': 'pm25_dobowe'}) )
     
-    #połaczenie df z pomiarami z nazwami województw 
-    df_with_voivodeship = daily_avg.merge(voivodeship, left_on='stacja', right_on='Kod stacji', how='left')
-    # usunięcie niepotrzebnych kolumn 
+    # przypisanie województwa do kodu stacji 
+    final_df['czas'] = pd.to_datetime(final_df['czas'])
+    final_df = filter_data(final_df)
+    df_with_voivodeship = final_df.merge(voivodeship, left_on='stacja', right_on='Kod stacji', how='left')
+    # usunięcie niepotrzebnej kolumny
     df_with_voivodeship.drop(columns=['Kod stacji'], inplace=True)
 
-    # Tablica binarna stwierdzająca, czy zmierzone stężenia PM2.5 przekraczały dobową normę
-    df_with_voivodeship['przekroczenie'] = ((df_with_voivodeship['pm25_dobowe'] > 15).astype(int))
+    # grupowanie danych po Województwie oraz po dacie wyciągniętej z kolumny 'czas'
+    daily_voivodeship_avg = df_with_voivodeship.groupby(['Województwo', 'rok', df_with_voivodeship['czas'].dt.date])['wartość'].mean().reset_index()
+    
+    #zmiana nazw kolumn
+    daily_voivodeship_avg.rename(columns={'czas': 'data', 'wartość': 'średnia_dobowa_PM25'}, inplace=True)
+    # badanie czy przekraczona jest norma 
+    daily_voivodeship_avg["przekroczenie"] = daily_voivodeship_avg['średnia_dobowa_PM25']> norm
+    #zliczenie dni z przekroczeniem w roku
+    yearly_exceedances = daily_voivodeship_avg.groupby(['Województwo', 'rok'])['przekroczenie'].sum().reset_index().rename(columns={'przekroczenie': 'liczba przekroczeń'})
 
-    # Tabela sumująca ilość wykroczeń dla każdej stacji względem lat danych lat
-    exceedances = (df_with_voivodeship.groupby(['stacja', 'rok', 'miejscowość','Województwo'])['przekroczenie'].sum().reset_index().rename(columns={'przekroczenie': 'ilość przekroczeń'}))
 
-    # Sumowanie przekroczeń dla województw i lat
-    voivodeship_summary = exceedances.groupby(['Województwo', 'rok'])['ilość przekroczeń'].sum().reset_index()
+    return yearly_exceedances
 
-    # Sortowanie dla lepszej czytelności
-    voivodeship_summary = voivodeship_summary.sort_values(by=['Województwo', 'rok'])
 
-    # Przekształcenie tabeli: Województwa w wierszach, lata w kolumnach
-    voivodeship_summary = voivodeship_summary.pivot_table(
-    index='Województwo', 
-    columns='rok', 
-    values='ilość przekroczeń', 
-    aggfunc='sum')
-
-    return voivodeship_summary
 
 if __name__ == "__main__":
     pass
