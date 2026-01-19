@@ -131,5 +131,53 @@ def count_daily_avg(df):
 
     return data_exceedances
 
+#zadanie 5 
+def voivodeship_above_norm_mean(df_meta, final_df, norm = 15):
+    """
+    Oblicza roczną liczbę dni z przekroczeniem normy PM2.5 dla każdego województwa.
+
+    Funkcja integruje dane pomiarowe z metadanymi stacji, wylicza średnie dobowe 
+    dla całych województw i zlicza wystąpienia przekroczeń zadanej normy.
+
+    Args:
+        df_meta (pd.DataFrame): Ramka danych zawierająca metadane stacji. 
+        final_df (pd.DataFrame): Główna ramka danych z pomiarami. 
+        norm (int, optional): Wartość progowa stężenia PM2.5 (µg/m³). 
+            Domyślnie wynosi 15.
+
+    Returns:
+        pd.DataFrame: Tabela wynikowa zawierająca kolumny:
+            - 'Województwo': Nazwa regionu.
+            - 'rok': Rok kalendarzowy pomiaru.
+            - 'liczba przekroczeń': Suma dni, w których średnia dobowa dla 
+            województwa była wyższa niż norma.
+    """
+    # tablica z województwami i kodami stacji 
+    voivodeship = df_meta[["Kod stacji", "Województwo"]] 
+    voivodeship = voivodeship.dropna()
+    voivodeship.drop_duplicates(inplace=True)
+    
+    # przypisanie województwa do kodu stacji 
+    final_df['czas'] = pd.to_datetime(final_df['czas'])
+    final_df = filter_data(final_df)
+    df_with_voivodeship = final_df.merge(voivodeship, left_on='stacja', right_on='Kod stacji', how='left')
+    # usunięcie niepotrzebnej kolumny
+    df_with_voivodeship.drop(columns=['Kod stacji'], inplace=True)
+
+    # grupowanie danych po Województwie oraz po dacie wyciągniętej z kolumny 'czas'
+    daily_voivodeship_avg = df_with_voivodeship.groupby(['Województwo', 'rok', df_with_voivodeship['czas'].dt.date])['wartość'].mean().reset_index()
+    
+    #zmiana nazw kolumn
+    daily_voivodeship_avg.rename(columns={'czas': 'data', 'wartość': 'średnia_dobowa_PM25'}, inplace=True)
+    # badanie czy przekraczona jest norma 
+    daily_voivodeship_avg["przekroczenie"] = daily_voivodeship_avg['średnia_dobowa_PM25']> norm
+    #zliczenie dni z przekroczeniem w roku
+    yearly_exceedances = daily_voivodeship_avg.groupby(['Województwo', 'rok'])['przekroczenie'].sum().reset_index().rename(columns={'przekroczenie': 'liczba przekroczeń'})
 
 
+    return yearly_exceedances
+
+
+
+if __name__ == "__main__":
+    pass

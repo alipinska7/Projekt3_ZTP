@@ -112,3 +112,44 @@ def barplot(df_exc):
     plt.xlabel("Stacje", size=13)
     plt.grid()
     plt.show()
+
+#zadanie 5
+def plot_voivodeship_comparison(df_voivodeship):
+    """
+    Funkcja generuje wykres słupkowy grupowany porównujący liczbę dni z przekroczeniem normy PM2.5 
+    w województwach.
+
+    Args:
+        df_voivodeship (pd.DataFrame): Ramka danych z roczna liczbą przekroczeń w województwach.
+
+    Returns:
+        None: Funkcja nie zwraca żadnej wartości, generuje podgląd wykresu 
+            za pomocą plt.show().
+    """
+
+    # Ustawienie stylu i rozmiaru wykresu
+    sns.set_theme(style="whitegrid")
+    plt.figure(figsize=(15, 8))
+
+    # Rysowanie wykresu słupkowego
+    # x: Województwo, y: liczba dni
+    ax = sns.barplot(
+        data=df_voivodeship, 
+        x='Województwo', 
+        y='liczba przekroczeń', 
+        hue='rok', 
+        palette='Pastel2'
+    )
+
+    # Dodanie legendy i opisów
+    plt.title('Liczba dni z przekroczeniem normy PM2.5 w województwach', fontsize=16)
+    plt.xlabel('Województwo', fontsize=12)
+    plt.ylabel('liczba dni z przekroczeniem', fontsize=12)
+    plt.xticks(rotation=45, ha='right')
+
+    # Dostosowanie legendy, aby nie zasłaniała danych
+    plt.legend(title='Rok pomiaru', bbox_to_anchor=(1.02, 1), loc='upper left')
+
+    plt.tight_layout()
+    plt.show()
+    return 
